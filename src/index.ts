@@ -1,6 +1,6 @@
 import cors from "cors";
 import dotenv from "dotenv";
-import express from "express";
+import express, { Request, Response } from "express";
 import mongoose from "mongoose";
 import morgan from "morgan";
 import User from "./models/User";
@@ -20,9 +20,17 @@ app.get("/", (req, res) => {
   res.send("CodeQuest API is running...");
 });
 
-app.post("/api/users", async (req, res) => {
+app.post("/api/users", async (req: Request, res: Response) => {
   try {
     const { username, email, passwordHash, githubId, avatarUrl } = req.body;
+
+    // validate input
+    if (!username || !email) {
+      res.status(400).json({ error: "Username and email are required" });
+      return;
+    }
+
+    // Create new user & save to database
     const user = new User({
       username,
       email,
@@ -31,8 +39,17 @@ app.post("/api/users", async (req, res) => {
       avatarUrl,
     });
     await user.save();
+
     res.status(201).json(user);
-  } catch (error) {
+  } catch (error: any) {
+    // Handle duplicate key error
+    if (error.code === 11000) {
+      res.status(409).json({ error: "Username or email already exists" });
+      return;
+    }
+
+    // Handle other errors
+    console.error(error);
     res.status(500).json({ error: "Failed to create user" });
   }
 });
