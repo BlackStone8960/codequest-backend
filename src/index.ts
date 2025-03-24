@@ -4,6 +4,7 @@ import express, { Request, Response } from "express";
 import mongoose from "mongoose";
 import morgan from "morgan";
 import User from "./models/User";
+import { userSchema } from "./validators/userValidator";
 
 dotenv.config();
 
@@ -22,13 +23,14 @@ app.get("/", (req, res) => {
 
 app.post("/api/users", async (req: Request, res: Response) => {
   try {
-    const { username, email, passwordHash, githubId, avatarUrl } = req.body;
-
-    // validate input
-    if (!username || !email) {
-      res.status(400).json({ error: "Username and email are required" });
+    // Validate with Zod
+    const parsed = userSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.flatten() });
       return;
     }
+
+    const { username, email, passwordHash, githubId, avatarUrl } = req.body;
 
     // Create new user & save to database
     const user = new User({
