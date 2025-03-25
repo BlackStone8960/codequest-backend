@@ -1,8 +1,9 @@
 import cors from "cors";
 import dotenv from "dotenv";
-import express from "express";
+import express, { Response } from "express";
 import mongoose from "mongoose";
 import morgan from "morgan";
+import { AuthenticatedRequest, verifyToken } from "./middleware/verifyToken";
 import authRoutes from "./routes/authRoutes";
 
 dotenv.config();
@@ -21,6 +22,14 @@ app.use("/api/auth", authRoutes);
 app.get("/", (req, res) => {
   res.send("CodeQuest API is running...");
 });
+
+app.get(
+  "/api/profile",
+  verifyToken,
+  (req: AuthenticatedRequest, res: Response) => {
+    res.json({ message: "You are authenticated!", userId: req.userId });
+  }
+);
 
 // Connect to MongoDB
 mongoose
