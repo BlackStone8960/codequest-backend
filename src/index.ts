@@ -3,6 +3,8 @@ import dotenv from "dotenv";
 import express, { Response } from "express";
 import mongoose from "mongoose";
 import morgan from "morgan";
+import passport from "passport";
+import "./config/passport";
 import { AuthenticatedRequest, verifyToken } from "./middleware/verifyToken";
 import User from "./models/User";
 import authRoutes from "./routes/authRoutes";
@@ -16,6 +18,7 @@ const PORT = process.env.PORT || 5000;
 // Middlewares
 app.use(express.json());
 app.use(cors());
+app.use(passport.initialize());
 app.use(morgan("dev"));
 app.use("/api/auth", authRoutes);
 app.use("/api/tasks", taskRoutes);

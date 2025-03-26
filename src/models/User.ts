@@ -8,7 +8,7 @@ export interface IUser extends Document {
   avatarUrl?: string;
   experience: number;
   level: number;
-  questsCompleted: mongoose.Types.ObjectId[];
+  tasksCompleted: mongoose.Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -22,7 +22,7 @@ const UserSchema: Schema = new Schema(
     avatarUrl: { type: String },
     experience: { type: Number, default: 0 },
     level: { type: Number, default: 1 },
-    questsCompleted: [{ type: Schema.Types.ObjectId, ref: "Quest" }],
+    tasksCompleted: [{ type: Schema.Types.ObjectId, ref: "Task" }],
   },
   { timestamps: true }
 );

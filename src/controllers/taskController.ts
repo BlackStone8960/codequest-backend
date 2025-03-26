@@ -1,4 +1,5 @@
 import { Response } from "express";
+import mongoose from "mongoose";
 import { AuthenticatedRequest } from "../middleware/verifyToken";
 import Task from "../models/Task";
 import User from "../models/User";
@@ -90,6 +91,10 @@ export const completeTask = async (
     const user = await User.findById(req.userId);
 
     if (user) {
+      if (!user.tasksCompleted.includes(task._id as mongoose.Types.ObjectId)) {
+        user.tasksCompleted.push(task._id as mongoose.Types.ObjectId);
+      }
+
       // Add experience to user
       user.experience += task.experience;
 
