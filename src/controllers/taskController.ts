@@ -87,11 +87,18 @@ export const completeTask = async (
 
     await task.save();
 
-    // Update user's experience
     const user = await User.findById(req.userId);
 
     if (user) {
+      // Add experience to user
       user.experience += task.experience;
+
+      // Level up user if they have enough experience
+      while (user.experience >= getRequiredExp(user.level)) {
+        user.experience -= getRequiredExp(user.level);
+        user.level++;
+      }
+
       await user.save();
     }
 
@@ -101,3 +108,8 @@ export const completeTask = async (
     res.status(500).json({ error: "Failed to complete task" });
   }
 };
+
+// Get required experience for next level
+function getRequiredExp(level: number) {
+  return level * 15;
+}
