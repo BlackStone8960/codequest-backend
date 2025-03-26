@@ -1,6 +1,7 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "../middleware/verifyToken";
 import Task from "../models/Task";
+import User from "../models/User";
 
 // GET /api/tasks
 export const getTasks = async (req: AuthenticatedRequest, res: Response) => {
@@ -85,6 +86,14 @@ export const completeTask = async (
     task.completed = true;
 
     await task.save();
+
+    // Update user's experience
+    const user = await User.findById(req.userId);
+
+    if (user) {
+      user.experience += task.experience;
+      await user.save();
+    }
 
     res.status(200).json({ message: "Task marked as completed", task });
   } catch (error) {

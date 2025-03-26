@@ -4,6 +4,7 @@ import express, { Response } from "express";
 import mongoose from "mongoose";
 import morgan from "morgan";
 import { AuthenticatedRequest, verifyToken } from "./middleware/verifyToken";
+import User from "./models/User";
 import authRoutes from "./routes/authRoutes";
 import taskRoutes from "./routes/taskRoutes";
 
@@ -27,8 +28,14 @@ app.get("/", (req, res) => {
 app.get(
   "/api/profile",
   verifyToken,
-  (req: AuthenticatedRequest, res: Response) => {
-    res.json({ message: "You are authenticated!", userId: req.userId });
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const user = await User.findById(req.userId);
+      res.status(200).json({ user });
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ error: "Failed to fetch user" });
+    }
   }
 );
 
