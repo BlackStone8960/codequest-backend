@@ -12,7 +12,8 @@ export const register = async (req: Request, res: Response) => {
     return;
   }
 
-  const { username, email, passwordHash, githubId, avatarUrl } = req.body;
+  const { username, email, passwordHash, githubId, avatarUrl, displayName } =
+    req.body;
 
   try {
     // Check if user already exists
@@ -34,6 +35,12 @@ export const register = async (req: Request, res: Response) => {
       passwordHash: hashedPassword,
       githubId,
       avatarUrl,
+      displayName,
+      currentHP: 100,
+      maxHP: 100,
+      currentLevelXP: 0,
+      levelUpXP: 1500,
+      rank: 1,
     });
 
     // Save user to database
@@ -54,6 +61,7 @@ export const register = async (req: Request, res: Response) => {
 export const login = async (req: Request, res: Response) => {
   // Validate input
   const { email, password } = req.body;
+  console.log({ email, password });
   if (!email || !password) {
     res.status(400).json({ error: "Email and password are required" });
     return;

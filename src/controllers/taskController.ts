@@ -96,12 +96,16 @@ export const completeTask = async (
       }
 
       // Add experience to user
-      user.experience += task.experience;
+      user.currentLevelXP += task.experience;
 
       // Level up user if they have enough experience
-      while (user.experience >= getRequiredExp(user.level)) {
-        user.experience -= getRequiredExp(user.level);
+      while (user.currentLevelXP >= getRequiredExp(user.level)) {
+        user.currentLevelXP -= getRequiredExp(user.level);
         user.level++;
+
+        user.levelUpXP = getRequiredExp(user.level);
+        user.maxHP += 10 + user.level * 2; // Increase max HP by 10 + 2 per level
+        user.currentHP = user.maxHP; // Restore HP on level up
       }
 
       await user.save();

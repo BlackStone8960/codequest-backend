@@ -6,7 +6,13 @@ export interface IUser extends Document {
   passwordHash?: string;
   githubId?: string;
   avatarUrl?: string;
-  experience: number;
+  displayName: string;
+  totalExperience: number;
+  currentHP: number;
+  maxHP: number;
+  currentLevelXP: number;
+  levelUpXP: number;
+  rank: number;
   level: number;
   tasksCompleted: mongoose.Types.ObjectId[];
   createdAt: Date;
@@ -20,7 +26,13 @@ const UserSchema: Schema = new Schema(
     passwordHash: { type: String },
     githubId: { type: String },
     avatarUrl: { type: String },
-    experience: { type: Number, default: 0 },
+    displayName: { type: String, required: true },
+    totalExperience: { type: Number, default: 0 },
+    currentHP: { type: Number, default: 100 },
+    maxHP: { type: Number, default: 100 },
+    currentLevelXP: { type: Number, default: 0 },
+    levelUpXP: { type: Number, default: 1500 },
+    rank: { type: Number, default: 1 },
     level: { type: Number, default: 1 },
     tasksCompleted: [{ type: Schema.Types.ObjectId, ref: "Task" }],
   },
