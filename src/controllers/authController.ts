@@ -12,8 +12,10 @@ export const register = async (req: Request, res: Response) => {
     return;
   }
 
-  const { username, email, passwordHash, githubId, avatarUrl, displayName } =
-    req.body;
+  const { username, email, password, githubId, displayName } = req.body;
+
+  // Update avatarUrl to use the default avatar
+  const avatarUrl = `${req.protocol}://${req.get("host")}/default-avatar.png`;
 
   try {
     // Check if user already exists
@@ -24,8 +26,8 @@ export const register = async (req: Request, res: Response) => {
     }
 
     // Hash password
-    const hashedPassword = passwordHash
-      ? await bcrypt.hash(passwordHash, 10)
+    const hashedPassword = password
+      ? await bcrypt.hash(password, 10)
       : undefined;
 
     // Create new user
