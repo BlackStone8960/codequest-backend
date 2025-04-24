@@ -1,14 +1,30 @@
+import { isBefore, parseISO, startOfDay } from "date-fns";
 import { Response } from "express";
 import mongoose from "mongoose";
 import { AuthenticatedRequest } from "../middleware/verifyToken";
 import Task from "../models/Task";
 import User from "../models/User";
 
+// Calculate experience based on difficulty
+function calculateExperience(difficulty: "easy" | "medium" | "hard"): number {
+  switch (difficulty) {
+    case "easy":
+      return 5;
+    case "medium":
+      return 10;
+    case "hard":
+      return 15;
+    default:
+      throw new Error("Invalid difficulty");
+  }
+}
+
 // GET /api/tasks
 export const getTasks = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const tasks = await Task.find({ creator: req.userId }).sort({
-      createdAt: -1,
+      dueDate: 1, // Sort by due date (ascending)
+      createdAt: -1, // Sort by creation date (descending)
     });
     res.status(200).json(tasks);
   } catch (error) {
@@ -19,37 +35,42 @@ export const getTasks = async (req: AuthenticatedRequest, res: Response) => {
 
 // POST /api/tasks
 export const createTask = async (req: AuthenticatedRequest, res: Response) => {
-  const { title, description, difficulty } = req.body;
+  const { title, description, difficulty, dueDate } = req.body;
 
-  if (!title || difficulty === undefined) {
+  if (!title || !difficulty) {
     res.status(400).json({ error: "Title and difficulty are required" });
     return;
   }
 
-  // Determine experience based on difficulty
-  let experience = 0;
-  switch (difficulty) {
-    case "easy":
-      experience = 5;
-      break;
-    case "medium":
-      experience = 10;
-      break;
-    case "hard":
-      experience = 15;
-      break;
-    default:
-      res.status(400).json({ error: "Invalid difficulty" });
+  if (!["easy", "medium", "hard"].includes(difficulty)) {
+    res.status(400).json({ error: "Invalid difficulty" });
+    return;
+  }
+
+  // Check if due date is in the past (using date-fns for timezone-safe comparison)
+  if (dueDate) {
+    const inputDate = parseISO(dueDate);
+    const today = startOfDay(new Date());
+
+    console.log({ inputDate, today });
+
+    if (isBefore(inputDate, today)) {
+      res.status(400).json({ error: "Due date cannot be in the past" });
       return;
+    }
   }
 
   try {
+    const experience = calculateExperience(difficulty);
+
     // Create new task (creator is logged in user)
     const newTask = new Task({
       title,
       description,
+      difficulty,
       experience,
       creator: req.userId,
+      dueDate: dueDate ? parseISO(dueDate) : undefined,
     });
 
     await newTask.save();
