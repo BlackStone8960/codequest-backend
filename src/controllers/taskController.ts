@@ -118,6 +118,7 @@ export const completeTask = async (
 
       // Add experience to user
       user.currentLevelXP += task.experience;
+      user.totalExperience += task.experience;
 
       // Level up user if they have enough experience
       while (user.currentLevelXP >= getRequiredExp(user.level)) {
@@ -132,7 +133,11 @@ export const completeTask = async (
       await user.save();
     }
 
-    res.status(200).json({ message: "Task marked as completed", task });
+    res.status(200).json({
+      message: "Task marked as completed",
+      task,
+      user,
+    });
   } catch (error) {
     console.error("Error completing task:", error);
     res.status(500).json({ error: "Failed to complete task" });
