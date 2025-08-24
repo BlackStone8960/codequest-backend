@@ -33,7 +33,7 @@ router.get(
     });
 
     // Redirect to frontend with JWT
-    res.redirect(`http://localhost:3000?token=${token}`);
+    res.redirect(`http://localhost:3000/auth-callback?token=${token}`);
   }
 );
 
