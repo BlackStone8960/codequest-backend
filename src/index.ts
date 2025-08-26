@@ -8,6 +8,7 @@ import "./config/passport";
 import { AuthenticatedRequest, verifyToken } from "./middleware/verifyToken";
 import User from "./models/User";
 import authRoutes from "./routes/authRoutes";
+import githubRoutes from "./routes/githubRoutes";
 import taskRoutes from "./routes/taskRoutes";
 
 dotenv.config();
@@ -22,6 +23,7 @@ app.use(passport.initialize());
 app.use(morgan("dev"));
 app.use("/api/auth", authRoutes);
 app.use("/api/tasks", taskRoutes);
+app.use("/api/github", githubRoutes);
 
 // Routes
 app.get("/", (req, res) => {

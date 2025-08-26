@@ -5,6 +5,7 @@ export interface IUser extends Document {
   email: string;
   passwordHash?: string;
   githubId?: string;
+  githubAccessToken?: string;
   avatarUrl?: string;
   displayName: string;
   totalExperience: number;
@@ -15,6 +16,9 @@ export interface IUser extends Document {
   rank: number;
   level: number;
   streak: number;
+  longestStreak: number;
+  totalContributions: number;
+  lastCommitDate?: string;
   tasksCompleted: mongoose.Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
@@ -26,6 +30,7 @@ const UserSchema: Schema = new Schema(
     email: { type: String, required: true, unique: true },
     passwordHash: { type: String },
     githubId: { type: String },
+    githubAccessToken: { type: String },
     avatarUrl: { type: String },
     displayName: { type: String, required: true },
     totalExperience: { type: Number, default: 0 },
@@ -36,6 +41,9 @@ const UserSchema: Schema = new Schema(
     rank: { type: Number, default: 1 },
     level: { type: Number, default: 1 },
     streak: { type: Number, default: 0 },
+    longestStreak: { type: Number, default: 0 },
+    totalContributions: { type: Number, default: 0 },
+    lastCommitDate: { type: String },
     tasksCompleted: [{ type: Schema.Types.ObjectId, ref: "Task" }],
   },
   { timestamps: true }

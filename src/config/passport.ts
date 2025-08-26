@@ -27,8 +27,10 @@ passport.use(
         // Find user who already signed up with Github
         const existingUser = await User.findOne({ githubId: profile.id });
 
-        // If user exists, return user
+        // If user exists, update access token and return user
         if (existingUser) {
+          existingUser.githubAccessToken = accessToken;
+          await existingUser.save();
           return done(null, existingUser);
         }
 
@@ -37,9 +39,19 @@ passport.use(
           username: profile.username || "NoUsername",
           email: profile.emails?.[0]?.value || "no-email@example.com", // Set dummy email if email is not public
           githubId: profile.id,
+          githubAccessToken: accessToken,
           avatarUrl: profile.photos?.[0]?.value, // Set avatar URL if user has Github avatar
-          experience: 0,
+          displayName: profile.displayName || profile.username || "NoUsername",
+          totalExperience: 0,
+          currentHP: 100,
+          maxHP: 100,
+          currentLevelXP: 0,
+          levelUpXP: 1500,
+          rank: 1,
           level: 1,
+          streak: 0,
+          longestStreak: 0,
+          totalContributions: 0,
           tasksCompleted: [],
         });
 
