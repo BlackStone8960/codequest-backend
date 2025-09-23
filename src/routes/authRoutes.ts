@@ -17,7 +17,7 @@ router.post("/login", login);
 // GET /api/auth/github - Start Github OAuth
 router.get(
   "/github",
-  passport.authenticate("github", { scope: ["user:email"] })
+  passport.authenticate("github", { scope: ["user:email", "public_repo"] })
 );
 
 // GET /api/auth/github/callback - Callback URL for Github OAuth

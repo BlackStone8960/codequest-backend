@@ -30,18 +30,38 @@ passport.use(
         // If user exists, update access token and return user
         if (existingUser) {
           existingUser.githubAccessToken = accessToken;
+          // Update displayName if it's missing or empty
+          if (
+            !existingUser.displayName ||
+            existingUser.displayName === "NoUsername"
+          ) {
+            existingUser.displayName =
+              profile.displayName ||
+              profile._json?.name ||
+              profile.username ||
+              profile._json?.login ||
+              "GitHub User";
+          }
           await existingUser.save();
           return done(null, existingUser);
         }
 
         // If user does not exist, create new user
+        // Ensure displayName is always set with proper fallback
+        const displayName =
+          profile.displayName ||
+          profile._json?.name ||
+          profile.username ||
+          profile._json?.login ||
+          "GitHub User";
+
         const newUser = await User.create({
-          username: profile.username || "NoUsername",
+          username: profile.username || profile._json?.login || "NoUsername",
           email: profile.emails?.[0]?.value || "no-email@example.com", // Set dummy email if email is not public
           githubId: profile.id,
           githubAccessToken: accessToken,
           avatarUrl: profile.photos?.[0]?.value, // Set avatar URL if user has Github avatar
-          displayName: profile.displayName || profile.username || "NoUsername",
+          displayName: displayName,
           totalExperience: 0,
           currentHP: 100,
           maxHP: 100,
@@ -57,6 +77,8 @@ passport.use(
 
         return done(null, newUser);
       } catch (error) {
+        console.error("Error in GitHub authentication:", error);
+        console.error("Profile data:", JSON.stringify(profile, null, 2));
         return done(error as any, undefined);
       }
     }
