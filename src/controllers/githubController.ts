@@ -219,17 +219,24 @@ export const updateUserStreak = async (
     const streakData = calculateStreak(allCommits);
 
     // Update user's streak information
-    user.streak = streakData.currentStreak;
+    // Only update streak if GitHub-calculated streak is higher than current stored streak
+    // to avoid overwriting streak earned via task completion
+    user.streak = Math.max(user.streak || 0, streakData.currentStreak);
     user.longestStreak = Math.max(
       user.longestStreak || 0,
-      streakData.longestStreak
+      streakData.longestStreak,
+      user.streak
     );
     user.totalContributions = streakData.totalContributions;
     user.lastCommitDate = streakData.lastCommitDate || undefined;
 
     await user.save();
 
-    res.status(200).json(streakData);
+    res.status(200).json({
+      ...streakData,
+      currentStreak: user.streak,
+      longestStreak: user.longestStreak,
+    });
   } catch (error: any) {
     console.error("Error updating streak:", error);
 

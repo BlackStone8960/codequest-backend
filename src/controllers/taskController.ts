@@ -130,6 +130,29 @@ export const completeTask = async (
         user.currentHP = user.maxHP; // Restore HP on level up
       }
 
+      // Update streak on task completion (once per day)
+      const todayUTC = new Date().toISOString().slice(0, 10);
+      const lastActivity = user.lastCommitDate;
+
+      if (lastActivity === todayUTC) {
+        // Already recorded activity today, no streak change
+      } else {
+        const yesterdayUTC = (() => {
+          const d = new Date(todayUTC + "T00:00:00Z");
+          d.setUTCDate(d.getUTCDate() - 1);
+          return d.toISOString().slice(0, 10);
+        })();
+
+        if (lastActivity === yesterdayUTC) {
+          user.streak += 1;
+        } else {
+          user.streak = 1;
+        }
+
+        user.longestStreak = Math.max(user.longestStreak, user.streak);
+        user.lastCommitDate = todayUTC;
+      }
+
       await user.save();
     }
 
