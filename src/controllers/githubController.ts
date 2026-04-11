@@ -219,16 +219,28 @@ export const updateUserStreak = async (
     const streakData = calculateStreak(allCommits);
 
     // Update user's streak information
-    // Only update streak if GitHub-calculated streak is higher than current stored streak
-    // to avoid overwriting streak earned via task completion
-    user.streak = Math.max(user.streak || 0, streakData.currentStreak);
+    const todayUTC = new Date().toISOString().slice(0, 10);
+    const yesterdayUTC = addDaysUTC(todayUTC, -1);
+    const taskStreakActive =
+      user.lastCommitDate === todayUTC ||
+      user.lastCommitDate === yesterdayUTC;
+
+    if (streakData.currentStreak > 0) {
+      // GitHub activity is recent — use GitHub-calculated streak
+      user.streak = streakData.currentStreak;
+      user.lastCommitDate = streakData.lastCommitDate || undefined;
+    } else if (!taskStreakActive) {
+      // No GitHub activity and no recent task activity — reset streak
+      user.streak = 0;
+    }
+    // else: no GitHub activity but task activity is still within the streak window — keep existing streak
+
     user.longestStreak = Math.max(
       user.longestStreak || 0,
       streakData.longestStreak,
       user.streak
     );
     user.totalContributions = streakData.totalContributions;
-    user.lastCommitDate = streakData.lastCommitDate || undefined;
 
     await user.save();
 
