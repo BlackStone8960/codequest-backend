@@ -1,12 +1,16 @@
 import express from "express";
 import {
   getGitHubCommits,
+  getGitHubStatus,
   getGitHubToken,
   updateUserStreak,
 } from "../controllers/githubController";
 import { verifyToken } from "../middleware/verifyToken";
 
 const router = express.Router();
+
+// GET /api/github/status - Check if the user's GitHub account is connected
+router.get("/status", verifyToken, getGitHubStatus as unknown as express.RequestHandler);
 
 // GET /api/github/token - Get GitHub access token for the user
 router.get("/token", verifyToken, getGitHubToken as express.RequestHandler);

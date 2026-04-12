@@ -25,6 +25,25 @@ export interface StreakData {
   commitDates: string[];
 }
 
+// GET /api/github/status - Check if the user's GitHub account is connected
+export const getGitHubStatus = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const connected = !!(user.githubId && user.githubAccessToken);
+    return res.status(200).json({ connected });
+  } catch (error) {
+    console.error("Error getting GitHub status:", error);
+    res.status(500).json({ error: "Failed to get GitHub status" });
+  }
+};
+
 // Get GitHub access token for the user
 export const getGitHubToken = async (
   req: AuthenticatedRequest,
