@@ -20,6 +20,7 @@ export interface IUser extends Document {
   totalContributions: number;
   lastCommitDate?: string;
   tasksCompleted: mongoose.Types.ObjectId[];
+  processedDeliveries: string[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -45,6 +46,7 @@ const UserSchema: Schema = new Schema(
     totalContributions: { type: Number, default: 0 },
     lastCommitDate: { type: String },
     tasksCompleted: [{ type: Schema.Types.ObjectId, ref: "Task" }],
+    processedDeliveries: { type: [String], default: [] },
   },
   { timestamps: true }
 );

@@ -5,6 +5,7 @@ import mongoose from "mongoose";
 import morgan from "morgan";
 import passport from "passport";
 import "./config/passport";
+import { handleWebhook } from "./controllers/githubController";
 import { AuthenticatedRequest, verifyToken } from "./middleware/verifyToken";
 import User from "./models/User";
 import authRoutes from "./routes/authRoutes";
@@ -15,6 +16,13 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// Webhook route must be registered before express.json() to receive raw body for signature verification
+app.post(
+  "/api/github/webhook",
+  express.raw({ type: "application/json" }),
+  handleWebhook as unknown as express.RequestHandler
+);
 
 // Middlewares
 app.use(express.json());

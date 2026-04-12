@@ -1,5 +1,6 @@
 import axios from "axios";
-import { Response } from "express";
+import * as crypto from "crypto";
+import { Request, Response } from "express";
 import { AuthenticatedRequest } from "../middleware/verifyToken";
 import User from "../models/User";
 
@@ -395,4 +396,109 @@ export const getGitHubCommits = async (
 
     res.status(500).json({ error: "Failed to fetch GitHub commits" });
   }
+};
+
+const XP_PER_PUSH = 10;
+const MAX_STORED_DELIVERIES = 100;
+
+// Handle GitHub webhook events
+export const handleWebhook = async (req: Request, res: Response) => {
+  const secret = process.env.GITHUB_WEBHOOK_SECRET;
+  if (!secret) {
+    console.error("GITHUB_WEBHOOK_SECRET is not set");
+    return res.status(500).json({ error: "Webhook secret not configured" });
+  }
+
+  // Verify signature
+  const signature = req.headers["x-hub-signature-256"] as string;
+  if (!signature) {
+    return res.status(401).json({ error: "Missing signature" });
+  }
+
+  const hmac = crypto.createHmac("sha256", secret);
+  hmac.update(req.body);
+  const digest = `sha256=${hmac.digest("hex")}`;
+
+  let signatureValid = false;
+  try {
+    signatureValid = crypto.timingSafeEqual(
+      Buffer.from(signature),
+      Buffer.from(digest)
+    );
+  } catch {
+    // Buffer length mismatch means invalid
+  }
+
+  if (!signatureValid) {
+    return res.status(401).json({ error: "Invalid signature" });
+  }
+
+  // Only handle push events
+  const event = req.headers["x-github-event"] as string;
+  if (event !== "push") {
+    return res.status(200).json({ message: "Event ignored" });
+  }
+
+  const deliveryId = req.headers["x-github-delivery"] as string;
+  const payload = JSON.parse(req.body.toString());
+
+  // Find user by GitHub ID (sender.id is the GitHub user ID)
+  const githubUserId = payload.sender?.id?.toString();
+  if (!githubUserId) {
+    return res.status(200).json({ message: "No sender info" });
+  }
+
+  const user = await User.findOne({ githubId: githubUserId });
+  if (!user) {
+    return res.status(200).json({ message: "User not found" });
+  }
+
+  // Prevent duplicate processing
+  if (deliveryId && user.processedDeliveries.includes(deliveryId)) {
+    return res.status(200).json({ message: "Already processed" });
+  }
+
+  // Award XP
+  user.totalExperience += XP_PER_PUSH;
+  user.currentLevelXP += XP_PER_PUSH;
+  while (user.currentLevelXP >= user.levelUpXP) {
+    user.currentLevelXP -= user.levelUpXP;
+    user.level += 1;
+  }
+
+  // Update streak
+  const todayUTC = new Date().toISOString().slice(0, 10);
+  const yesterdayUTC = addDaysUTC(todayUTC, -1);
+
+  if (user.lastCommitDate === todayUTC) {
+    // Already counted today — streak unchanged
+  } else if (user.lastCommitDate === yesterdayUTC) {
+    user.streak += 1;
+  } else {
+    user.streak = 1;
+  }
+  user.lastCommitDate = todayUTC;
+  user.longestStreak = Math.max(user.longestStreak || 0, user.streak);
+
+  // Record delivery ID (keep last N)
+  if (deliveryId) {
+    user.processedDeliveries.push(deliveryId);
+    if (user.processedDeliveries.length > MAX_STORED_DELIVERIES) {
+      user.processedDeliveries = user.processedDeliveries.slice(
+        -MAX_STORED_DELIVERIES
+      );
+    }
+  }
+
+  await user.save();
+
+  console.log(
+    `Webhook processed for user ${user.username}: +${XP_PER_PUSH} XP, streak=${user.streak}`
+  );
+
+  return res.status(200).json({
+    message: "OK",
+    xpAwarded: XP_PER_PUSH,
+    streak: user.streak,
+  });
 };
